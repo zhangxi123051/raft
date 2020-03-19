@@ -147,6 +147,13 @@ func (r *Raft) run() {
 }
 
 // runFollower runs the FSM for a follower.
+/*
+1.根据配置中的心跳超时时长，调用 randomTimeout() 函数来获取一个随机值，用以设置心跳超时时间间隔。
+2.进入到 for 循环中，通过 select 实现多路 IO 复用，周期性地获取消息和处理。如果步骤 1 中设置的心跳超时时间间隔发生了超时，执行步骤 3。
+3.如果等待心跳信息未超时，执行步骤
+4，如果等待心跳信息超时，执行步骤
+5。执行 continue 语句，开始一次新的 for 循环。设置节点状态为候选人，并退出 runFollower() 函数。
+*/
 func (r *Raft) runFollower() {
 	didWarn := false
 	r.logger.Info("entering follower state", "follower", r, "leader", r.Leader())
