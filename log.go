@@ -37,15 +37,19 @@ const (
 // and form the heart of the replicated state machine.
 type Log struct {
 	// Index holds the index of the log entry.
+	// 索引值
 	Index uint64
 
 	// Term holds the election term of the log entry.
+	// 任期编号
 	Term uint64
 
 	// Type holds the type of the log entry.
+	// 日志项类别
 	Type LogType
 
 	// Data holds the log entry's type-specific data.
+	// 指令
 	Data []byte
 
 	// Extensions holds an opaque byte slice of information for middleware. It
@@ -61,6 +65,7 @@ type Log struct {
 	// upgraded, but a leader changeover during this process could lead to
 	// trouble, so gating extension behavior via some flag in the client
 	// program is also a good idea.
+	// 扩展信息
 	Extensions []byte
 }
 

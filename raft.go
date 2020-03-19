@@ -371,6 +371,13 @@ func (r *Raft) setupLeaderState() {
 	r.leaderState.stepDown = make(chan struct{}, 1)
 }
 
+/*
+1.调用 startStopReplication()，执行日志复制功能
+2.然后启动新的协程，调用 replicate() 函数，执行日志复制功能
+3.接着在 replicate() 函数中，启动一个新的协程，调用 heartbeat() 函数，执行心跳功能
+4.在 heartbeat() 函数中，周期性地发送心跳信息，通知其他节点，我是领导者，我还活着，
+	不需要你们发起新的选举
+*/
 // runLeader runs the FSM for a leader. Do the setup here and drop into
 // the leaderLoop for the hot loop.
 func (r *Raft) runLeader() {
@@ -1250,6 +1257,15 @@ func (r *Raft) processHeartbeat(rpc RPC) {
 	}
 }
 
+/*
+1.在 runFollower() 函数中，调用 processRPC() 函数，处理接收到的 RPC 消息。
+2.在 processRPC() 函数中，调用 appendEntries() 函数，处理接收到的日志复制 RPC 请求。
+3.appendEntries() 函数，是跟随者处理日志的核心函数。
+    在步骤 3.1 中，比较日志一致性； if a.PrevLogEntry > 0 {}
+	在步骤 3.2 中，将新日志项存放在本地；r.logs.StoreLogs
+	在步骤 3.3 中，根据领导者最新提交的日志项索引值，
+		来计算当前需要被应用的日志项，并应用到本地状态机 if a.LeaderCommitIndex > 0 && a.LeaderCommitIndex > r.getCommitIndex() {r.processLogs(idx, nil)}
+*/
 // appendEntries is invoked when we get an append entries RPC call. This must
 // only be called from the main thread.
 func (r *Raft) appendEntries(rpc RPC, a *AppendEntriesRequest) {

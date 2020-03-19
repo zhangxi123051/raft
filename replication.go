@@ -127,6 +127,19 @@ func (s *followerReplication) setLastContact() {
 	s.lastContactLock.Unlock()
 }
 
+/*
+领导者复制日志
+1.在 runLeader() 函数中，调用 startStopReplication() 函数，执行日志复制功能
+2.启动一个新协程，调用 replicate() 函数，执行日志复制相关的功能
+3.在 replicate() 函数中，调用 replicateTo() 函数，执行步骤 4，如果开启了流水线复制模式，执行步骤 5。
+4.在 replicateTo() 函数中，进行日志复制和日志一致性检测，如果日志复制成功，则设置 s.allowPipeline = true，开启流水线复制模式。
+5.调用 pipelineReplicate() 函数，采用更高效的流水线方式，进行日志复制。
+
+
+在这里我强调一下，在什么条件下开启了流水线复制模式，很多同学可能会在这一块儿产生困惑，因为代码逻辑上有点儿绕。
+你可以这么理解，是在不需要进行日志一致性检测，复制功能已正常运行的时候，开启了流水线复制模式，
+目标是在环境正常的情况下，提升日志复制性能，如果在日志复制过程中出错了，就进入 RPC 复制模式，继续调用 replicateTo() 函数，进行日志复制
+*/
 // replicate is a long running routine that replicates log entries to a single
 // follower.
 func (r *Raft) replicate(s *followerReplication) {
