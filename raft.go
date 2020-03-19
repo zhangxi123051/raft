@@ -253,6 +253,13 @@ func (r *Raft) liveBootstrap(configuration Configuration) error {
 }
 
 // runCandidate runs the FSM for a candidate.
+/*
+1.首先调用 electSelf() 发起选举，给自己投一张选票，并向其他节点发送请求投票 RPC 消息，请求他们选举自己为领导者。
+  然后调用 randomTimeout() 函数，获取一个随机值，设置选举超时时间
+2.进入到 for 循环中，通过 select 实现多路 IO 复用，周期性地获取消息和处理。如果发生了选举超时，执行步骤 3，如果得到了投票信息，执行步骤 4
+3.发现了选举超时，退出 runCandidate() 函数，然后再重新执行 runCandidate() 函数，发起新一轮的选举
+4.如果候选人在指定时间内赢得了大多数选票，那么候选人将当选为领导者，调用 setState() 函数，将自己的状态变更为领导者，并退出 runCandidate() 函数
+*/
 func (r *Raft) runCandidate() {
 	r.logger.Info("entering candidate state", "node", r, "term", r.getCurrentTerm()+1)
 	metrics.IncrCounter([]string{"raft", "state", "candidate"}, 1)
